@@ -176,21 +176,21 @@ async function gerarCupomEFinalizar() {
     const ehCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
     if (ehCelular) {
-        // --- LÓGICA PARA CELULAR (FORMATO COMPATÍVEL BASE64) ---
-        try {
-            // 1. Converte o texto do cupom para o formato Base64 (exigido pelo rawbt://base64)
-            // Usamos unescape e encodeURIComponent para garantir que acentos (como №, Ç, Ã) não quebrem o código
-            const textoBase64 = btoa(unescape(encodeURIComponent(textoDoCupom)));
-            
-            // 2. Monta a URL correta com o texto convertido
-            const urlRawBT = `rawbt://base64?text=${textoBase64}`;
-            
-            // 3. Força o celular a abrir o app
-            window.location.href = urlRawBT;
-        } catch (erro) {
-            console.error("Erro ao converter texto para Base64:", erro);
-            alert("Erro ao formatar o cupom para o celular.");
-        }
+        // --- LÓGICA PARA CELULAR (MÉTODO OFICIAL RAWBT VIA LINK) ---
+        
+        // 1. Criamos um link invisível na memória do JavaScript
+        const linkRawBT = document.createElement('a');
+        
+        // 2. Formatamos o texto de forma simples (o RawBT aceita o texto direto se o link for montado assim)
+        const textoCodificado = encodeURIComponent(textoDoCupom);
+        
+        // 3. Este é o formato oficial que diz para o Android: "Abra o app RawBT, se não achar, NÃO vá para a Play Store"
+        linkRawBT.href = `intent:#Intent;scheme=rawbt;package=ru.a2012.rawbtprint;S.text=${textoCodificado};end;`;
+        
+        // 4. Força o clique no link para abrir o aplicativo
+        document.body.appendChild(linkRawBT);
+        linkRawBT.click();
+        document.body.removeChild(linkRawBT);
     } else {
         // --- LÓGICA PARA PC  ---
         const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
