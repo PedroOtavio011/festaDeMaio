@@ -173,44 +173,39 @@ async function gerarCupomEFinalizar() {
     --------------------------------
     \n\n\n`;
     // PASSO 4: Abre a janela de impressão
-    if (ehCelular) {
-        // --- LÓGICA PARA CELULAR (MÉTODO VIA SERVIDOR INTERNO DO RAWBT) ---
-        console.log("Enviando cupom direto para o servidor do RawBT...");
+    const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
+    
+    // Injetamos o texto do cupom formatado
+    janelaImpressao.document.write(`
+        <html>
+        <head>
+            <title>Cupom Pedido ${numeroPedidoGerado}</title>
+            <style>
+                body { margin: 0; padding: 10px; font-family: monospace; font-size: 14px; }
+                pre { white-space: pre-wrap; word-wrap: break-word; }
+            </style>
+        </head>
+        <body>
+            <pre>${textoDoCupom}</pre>
+        </body>
+        </html>
+    `);
+    janelaImpressao.document.close();
 
-        // Enviamos o cupom em segundo plano para o aplicativo RawBT que está aberto
-        fetch('http://localhost:40213/print', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain; charset=utf-8'
-            },
-            body: textoDoCupom
-        })
-        .then(resposta => {
-            if (resposta.ok) {
-                console.log("Impresso com sucesso via servidor local!");
-            } else {
-                alert("O RawBT recusou a impressão. Verifique se ele está configurado.");
-            }
-        })
-        .catch(erro => {
-            console.error("Erro ao falar com o RawBT:", erro);
-            alert("Não consegui conectar ao RawBT. O aplicativo está aberto no celular?");
-        });
-
-    } else {
-        // --- LÓGICA PARA PC  ---
-        const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
-        janelaImpressao.document.write(`<pre style="font-family: monospace; font-size: 14px; padding: 10px;">${textoDoCupom}</pre>`);
-        janelaImpressao.document.close();
-        janelaImpressao.print();
-        janelaImpressao.close();
-    }
+    // O pulo do gato: dispara a impressão padrão do sistema
+    janelaImpressao.print();
+    janelaImpressao.close();
 
     // PASSO 5: Limpa o caixa
     carrinho = [];
     atualizarInterfaceCarrinho();
     alert("Venda finalizada e salva no banco!");
 }
+    // PASSO 5: Limpa o caixa
+    carrinho = [];
+    atualizarInterfaceCarrinho();
+    alert("Venda finalizada e salva no banco!");
+
 
 
 if (botaoGerarCupom) {
