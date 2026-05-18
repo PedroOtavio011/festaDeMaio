@@ -109,16 +109,15 @@ botaoAdicionar.addEventListener('click', () => {
 });
 
 // 7. GERAR CUPOM E SALVAR VENDA
+
 async function gerarCupomEFinalizar() {
     if (carrinho.length === 0) {
         alert("O carrinho está vazio! Adicione itens antes de gerar o cupom.");
         return;
     }
 
-    // Cria o número de pedido baseado no timestamp atual (único e numérico para o 'numero_pedido')
     const numeroPedidoGerado = Math.floor(Math.random() * 900000) + 100000;
 
-    // Formatamos o carrinho para ter exatamente as colunas da tua imagem
     const itensParaSalvar = carrinho.map(item => ({
         produto_id: item.produtoId,
         quantidade: item.quantidade,
@@ -126,7 +125,6 @@ async function gerarCupomEFinalizar() {
         numero_pedido: numeroPedidoGerado
     }));
 
-    // PASSO 2: Envia todos os itens de uma vez para a tabela 'vendas'
     const { error: erroVenda } = await supabase
         .from('vendas')
         .insert(itensParaSalvar);
@@ -137,7 +135,7 @@ async function gerarCupomEFinalizar() {
         return;
     }
 
-    // PASSO 3: Monta o texto do cupom para a impressão
+    // Monta o cupom
     const dataAtual = new Date().toLocaleString('pt-BR');
     let totalVenda = 0;
     let itensCupom = '';
@@ -145,67 +143,67 @@ async function gerarCupomEFinalizar() {
     carrinho.forEach(item => {
         const subtotal = item.precoUnitario * item.quantidade;
         totalVenda += subtotal;
-        
-        // Organiza: alinhado à esquerda e o preço à direita
+
         const textoItem = `${item.quantidade}x ${item.nome}`;
         const textoPreco = `R$ ${subtotal.toFixed(2)}`;
-        
-        // Calcula o espaço que sobra no meio para somar 32 caracteres exatos
         const espacosNoMeio = 32 - (textoItem.length + textoPreco.length);
         const linhaFormatada = textoItem + ' '.repeat(Math.max(1, espacosNoMeio)) + textoPreco;
-        
+
         itensCupom += `${linhaFormatada}\n`;
     });
 
-    const textoDoCupom = `
-    --------------------------------
-            CUPOM NÃO FISCAL        
-    --------------------------------
-    Data/Hora: ${dataAtual}
-    Pedido №:  ${numeroPedidoGerado}
-    --------------------------------
-    ITENS:
-    ${itensCupom}
-    --------------------------------
-    TOTAL GERAL:        R$ ${totalVenda.toFixed(2)}
-    --------------------------------
-    OBRIGADO PELA PREFERENCIA!   
-    --------------------------------
-    \n\n\n`;
-    // PASSO 4: Abre a janela de impressão
+    const textoDoCupom =
+`--------------------------------
+        CUPOM NAO FISCAL
+--------------------------------
+Data/Hora: ${dataAtual}
+Pedido N: ${numeroPedidoGerado}
+--------------------------------
+ITENS:
+${itensCupom}
+--------------------------------
+TOTAL GERAL:      R$ ${totalVenda.toFixed(2)}
+--------------------------------
+OBRIGADO PELA PREFERENCIA!
+--------------------------------`;
+
     const ehCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
     if (ehCelular) {
-        // --- LÓGICA PARA CELULAR (MÉTODO OFICIAL RAWBT VIA LINK) ---
-        
-        // 1. Criamos um link invisível na memória do JavaScript
-        const linkRawBT = document.createElement('a');
-        
-        // 2. Formatamos o texto de forma simples (o RawBT aceita o texto direto se o link for montado assim)
-        const textoCodificado = encodeURIComponent(textoDoCupom);
-        
-        // 3. Este é o formato oficial que diz para o Android: "Abra o app RawBT, se não achar, NÃO vá para a Play Store"
-        linkRawBT.href = `intent:#Intent;scheme=rawbt;package=ru.a2012.rawbtprint;S.text=${textoCodificado};end;`;
-        
-        // 4. Força o clique no link para abrir o aplicativo
-        document.body.appendChild(linkRawBT);
-        linkRawBT.click();
-        document.body.removeChild(linkRawBT);
+        const codificado = encodeURIComponent(textoDoCupom);
+        window.location.href = `rawbt://${codificado}`;
+
     } else {
-        // --- LÓGICA PARA PC  ---
-        const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
-        janelaImpressao.document.write(`<pre style="font-family: monospace; font-size: 14px; padding: 10px;">${textoDoCupom}</pre>`);
-        janelaImpressao.document.close();
-        janelaImpressao.print();
-        janelaImpressao.close();
+        // ✅ USA innerHTML numa div oculta + window.print() direto, sem popup
+        const divImpressao = document.createElement('div');
+        divImpressao.id = 'area-impressao';
+        divImpressao.innerHTML = `<pre style="font-family: monospace; font-size: 14px;">${textoDoCupom}</pre>`;
+        document.body.appendChild(divImpressao);
+
+        // Adiciona estilo para esconder tudo exceto o cupom na hora de imprimir
+        const estilo = document.createElement('style');
+        estilo.id = 'estilo-impressao';
+        estilo.innerHTML = `
+            @media print {
+                body > *:not(#area-impressao) { display: none !important; }
+                #area-impressao { display: block !important; }
+            }
+            #area-impressao { display: none; }
+        `;
+        document.body.appendChild(estilo);
+
+        window.print();
+
+        // Remove os elementos após imprimir
+        document.body.removeChild(divImpressao);
+        document.body.removeChild(estilo);
     }
 
-    // PASSO 5: Limpa o caixa
+    // Limpa o carrinho DEPOIS de tudo
     carrinho = [];
     atualizarInterfaceCarrinho();
-    alert("Venda finalizada e salva no banco!");
+    alert("Venda finalizada e salva!");
 }
-
 
 if (botaoGerarCupom) {
     botaoGerarCupom.addEventListener('click', gerarCupomEFinalizar);
