@@ -173,39 +173,38 @@ async function gerarCupomEFinalizar() {
     --------------------------------
     \n\n\n`;
     // PASSO 4: Abre a janela de impressão
-    const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
-    
-    // Injetamos o texto do cupom formatado
-    janelaImpressao.document.write(`
-        <html>
-        <head>
-            <title>Cupom Pedido ${numeroPedidoGerado}</title>
-            <style>
-                body { margin: 0; padding: 10px; font-family: monospace; font-size: 14px; }
-                pre { white-space: pre-wrap; word-wrap: break-word; }
-            </style>
-        </head>
-        <body>
-            <pre>${textoDoCupom}</pre>
-        </body>
-        </html>
-    `);
-    janelaImpressao.document.close();
+    const ehCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-    // O pulo do gato: dispara a impressão padrão do sistema
-    janelaImpressao.print();
-    janelaImpressao.close();
+    if (ehCelular) {
+        // --- LÓGICA PARA CELULAR (MÉTODO OFICIAL RAWBT VIA LINK) ---
+        
+        // 1. Criamos um link invisível na memória do JavaScript
+        const linkRawBT = document.createElement('a');
+        
+        // 2. Formatamos o texto de forma simples (o RawBT aceita o texto direto se o link for montado assim)
+        const textoCodificado = encodeURIComponent(textoDoCupom);
+        
+        // 3. Este é o formato oficial que diz para o Android: "Abra o app RawBT, se não achar, NÃO vá para a Play Store"
+        linkRawBT.href = `intent:#Intent;scheme=rawbt;package=ru.a2012.rawbtprint;S.text=${textoCodificado};end;`;
+        
+        // 4. Força o clique no link para abrir o aplicativo
+        document.body.appendChild(linkRawBT);
+        linkRawBT.click();
+        document.body.removeChild(linkRawBT);
+    } else {
+        // --- LÓGICA PARA PC  ---
+        const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
+        janelaImpressao.document.write(`<pre style="font-family: monospace; font-size: 14px; padding: 10px;">${textoDoCupom}</pre>`);
+        janelaImpressao.document.close();
+        janelaImpressao.print();
+        janelaImpressao.close();
+    }
 
     // PASSO 5: Limpa o caixa
     carrinho = [];
     atualizarInterfaceCarrinho();
     alert("Venda finalizada e salva no banco!");
 }
-    // PASSO 5: Limpa o caixa
-    carrinho = [];
-    atualizarInterfaceCarrinho();
-    alert("Venda finalizada e salva no banco!");
-
 
 
 if (botaoGerarCupom) {
