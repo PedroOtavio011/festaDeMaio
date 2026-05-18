@@ -176,13 +176,14 @@ async function gerarCupomEFinalizar() {
     const ehCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
     if (ehCelular) {
-        // --- LÓGICA PARA CELULAR (VIA RAWBT COMPATÍVEL) ---
+        // --- LÓGICA PARA CELULAR (COMPATÍVEL COM GITHUB PAGES / HTTPS) ---
+        // Convertemos o texto para o formato que o RawBT exige via URL comum
         const textoCodificado = encodeURIComponent(textoDoCupom);
         
+        // Usamos o protocolo nativo 'rawbt://' que engana o bloqueio do HTTPS
+        const urlRawBT = `rawbt://base64?text=${textoCodificado}`;
         
-        const urlRawBT = `intent:#Intent;scheme=rawbt;package=ru.a2012.rawbtprint;S.text=${textoCodificado};end;`;
-        
-        // Dispara a abertura do aplicativo
+        // Faz o celular abrir o aplicativo direto
         window.location.href = urlRawBT;
     } else {
         // --- LÓGICA PARA PC  ---
