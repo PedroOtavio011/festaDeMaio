@@ -173,24 +173,30 @@ async function gerarCupomEFinalizar() {
     --------------------------------
     \n\n\n`;
     // PASSO 4: Abre a janela de impressão
-    const ehCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
     if (ehCelular) {
-        // --- LÓGICA PARA CELULAR (MÉTODO OFICIAL RAWBT VIA LINK) ---
-        
-        // 1. Criamos um link invisível na memória do JavaScript
-        const linkRawBT = document.createElement('a');
-        
-        // 2. Formatamos o texto de forma simples (o RawBT aceita o texto direto se o link for montado assim)
-        const textoCodificado = encodeURIComponent(textoDoCupom);
-        
-        // 3. Este é o formato oficial que diz para o Android: "Abra o app RawBT, se não achar, NÃO vá para a Play Store"
-        linkRawBT.href = `intent:#Intent;scheme=rawbt;package=ru.a2012.rawbtprint;S.text=${textoCodificado};end;`;
-        
-        // 4. Força o clique no link para abrir o aplicativo
-        document.body.appendChild(linkRawBT);
-        linkRawBT.click();
-        document.body.removeChild(linkRawBT);
+        // --- LÓGICA PARA CELULAR (MÉTODO VIA SERVIDOR INTERNO DO RAWBT) ---
+        console.log("Enviando cupom direto para o servidor do RawBT...");
+
+        // Enviamos o cupom em segundo plano para o aplicativo RawBT que está aberto
+        fetch('http://localhost:40213/print', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8'
+            },
+            body: textoDoCupom
+        })
+        .then(resposta => {
+            if (resposta.ok) {
+                console.log("Impresso com sucesso via servidor local!");
+            } else {
+                alert("O RawBT recusou a impressão. Verifique se ele está configurado.");
+            }
+        })
+        .catch(erro => {
+            console.error("Erro ao falar com o RawBT:", erro);
+            alert("Não consegui conectar ao RawBT. O aplicativo está aberto no celular?");
+        });
+
     } else {
         // --- LÓGICA PARA PC  ---
         const janelaImpressao = window.open('', '_blank', 'width=400,height=600');
